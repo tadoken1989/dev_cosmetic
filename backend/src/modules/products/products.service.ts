@@ -36,13 +36,23 @@ export class ProductsService {
       }
     }
 
+    // Tách images ra khỏi productData vì DTO có ProductImageDto[] nhưng entity cần ProductImage[]
+    const { images, ...productDataWithoutImages } = createProductDto
+
     const productData = {
-      ...createProductDto,
+      ...productDataWithoutImages,
       createdById: userId,
       updatedById: userId,
     }
 
     const product = await this.productsRepository.create(productData)
+    
+    // Xử lý images sau khi tạo product (nếu có)
+    if (images && images.length > 0) {
+      // TODO: Implement image creation logic if needed
+      // For now, images will be handled separately via image upload endpoint
+    }
+    
     return this.productsRepository.findById(product.id)
   }
 
@@ -88,9 +98,22 @@ export class ProductsService {
       }
     }
 
-    updateProductDto.updatedById = userId
+    // Tách images ra khỏi updateProductDto vì DTO có ProductImageDto[] nhưng entity cần ProductImage[]
+    const { images, ...updateDataWithoutImages } = updateProductDto
 
-    return this.productsRepository.update(id, updateProductDto)
+    // Tạo object mới với updatedById (không gán trực tiếp vào DTO)
+    const productData = {
+      ...updateDataWithoutImages,
+      updatedById: userId,
+    }
+
+    // Xử lý images sau khi update product (nếu có)
+    if (images && images.length > 0) {
+      // TODO: Implement image update logic if needed
+      // For now, images will be handled separately via image upload endpoint
+    }
+
+    return this.productsRepository.update(id, productData)
   }
 
   async remove(id: number): Promise<void> {

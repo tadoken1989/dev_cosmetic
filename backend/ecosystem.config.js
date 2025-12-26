@@ -1,12 +1,14 @@
+require('dotenv').config()
+
 module.exports = {
   apps: [{
-    name: 'cosmetic-backend',
+    name: 'backend',
     script: './dist/main.js',
-    instances: 2,
-    exec_mode: 'cluster',
+    instances: 1,
+    exec_mode: 'fork',
     env: {
-      NODE_ENV: 'production',
-      PORT: 3000
+      NODE_ENV: process.env.NODE_ENV || 'development',
+      PORT: process.env.PORT || 3000
     },
     error_file: './logs/backend-error.log',
     out_file: './logs/backend-out.log',
