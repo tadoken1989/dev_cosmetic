@@ -1,56 +1,33 @@
 import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
-import helmet from 'helmet'
 import { AppModule } from './app.module'
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor'
-import { TransformInterceptor } from './common/interceptors/transform.interceptor'
-
-const compression = require('compression')
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
-  })
-
-  // Security
-  app.use(helmet())
-  app.use(compression())
+  const app = await NestFactory.create(AppModule)
 
   // CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   })
 
   // Global prefix
-  app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1')
+  app.setGlobalPrefix('api/v1')
 
-  // Global pipes
+  // Validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
+      forbidNonWhitelisted: true,
     }),
   )
 
-  // Global filters
-  app.useGlobalFilters(new AllExceptionsFilter())
-
-  // Global interceptors
-  app.useGlobalInterceptors(
-    new LoggingInterceptor(),
-    new TransformInterceptor(),
-  )
-
-  // Swagger Documentation
+  // Swagger
   const config = new DocumentBuilder()
-    .setTitle('Cosmetic Management API')
+    .setTitle('Cosmetic API')
     .setDescription('API documentation for Cosmetic Management System')
     .setVersion('1.0')
     .addBearerAuth()
@@ -58,12 +35,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api/docs', app, document)
 
+  // Start server
   const port = process.env.PORT || 3000
   await app.listen(port)
-
-  console.log(`🚀 Application is running on: http://localhost:${port}`)
-  console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`)
+  console.log(`🚀 Server running on http://localhost:${port}`)
+  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`)
 }
 
 bootstrap()
-

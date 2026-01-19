@@ -62,5 +62,10 @@ export class ProductFilterDto {
   @IsOptional()
   @IsString()
   sortOrder?: 'ASC' | 'DESC'
+
+  @ApiPropertyOptional({ description: 'Cache buster timestamp' })
+  @IsOptional()
+  @Type(() => Number)
+  _t?: number
 }
 

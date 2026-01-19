@@ -16,10 +16,16 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { ManagementType } from '../entities/product.entity'
 
 class ProductImageDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'URL của hình ảnh' })
   @IsString()
   @IsNotEmpty()
   url: string
+
+  @ApiPropertyOptional({ description: 'Thứ tự sắp xếp', default: 0 })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  sortOrder?: number
 }
 
 export class CreateProductDto {
@@ -90,6 +96,12 @@ export class CreateProductDto {
   @IsOptional()
   @Min(0)
   importPrice?: number
+
+  @ApiPropertyOptional({ description: 'Số lượng tồn kho', example: 100 })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  stockQuantity?: number
 
   @ApiPropertyOptional({ description: 'Cho phép bán', default: true })
   @IsBoolean()

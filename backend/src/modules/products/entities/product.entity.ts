@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   OneToMany,
   JoinColumn,
@@ -64,7 +65,19 @@ export class Product {
   wholesalePrice: number
 
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, default: 0 })
+  wholesalePrice2: number
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, default: 0 })
+  wholesalePrice3: number
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, default: 0 })
   importPrice: number
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  barcodeOld: string
+
+  @Column({ type: 'text', nullable: true })
+  notes: string
 
   @Column({ type: 'boolean', default: true })
   allowSale: boolean
@@ -83,6 +96,15 @@ export class Product {
 
   @Column({ type: 'boolean', default: false })
   expiryWarningEnabled: boolean
+
+  @Column({ type: 'int', nullable: true })
+  expiryWarningDays: number
+
+  @Column({ type: 'boolean', default: false })
+  warrantyEnabled: boolean
+
+  @Column({ type: 'text', nullable: true })
+  warrantyPolicy: string
 
   @Column({ type: 'int', nullable: true })
   productTypeId: number
@@ -118,5 +140,8 @@ export class Product {
 
   @Column({ type: 'int', nullable: true })
   updatedById: number
+
+  @DeleteDateColumn()
+  deletedAt: Date
 }
 

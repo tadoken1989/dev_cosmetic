@@ -14,6 +14,11 @@ export const productService = {
     return response.data.data
   },
 
+  async getProduct(id: number): Promise<any> {
+    const response = await apiClient.get(`/products/${id}`)
+    return response.data
+  },
+
   async createProduct(data: CreateProductDto): Promise<Product> {
     const response = await apiClient.post('/products', data)
     return response.data.data
@@ -29,8 +34,41 @@ export const productService = {
   },
 
   async searchProducts(query: string): Promise<Product[]> {
-    const response = await apiClient.get(`/products/search/${query}`)
-    return response.data.data
+    const response = await apiClient.get('/products', { 
+      params: { search: query, page: 1, pageSize: 20 } 
+    })
+    return response.data.data || response.data || []
+  },
+
+  async getProductTypes(): Promise<{ data: Array<{ id: number; name: string }> }> {
+    const response = await apiClient.get('/products/types/list')
+    return response.data
+  },
+
+  async createProductType(data: { name: string }): Promise<any> {
+    const response = await apiClient.post('/products/types', data)
+    return response.data
+  },
+
+  async getBrands(): Promise<{ data: Array<{ id: number; name: string }> }> {
+    const response = await apiClient.get('/products/brands/list')
+    return response.data
+  },
+
+  async createBrand(data: { name: string }): Promise<any> {
+    const response = await apiClient.post('/products/brands', data)
+    return response.data
+  },
+
+  async getTaxes(): Promise<{ data: Array<{ id: number; name: string; rate: number }> }> {
+    const response = await apiClient.get('/products/taxes/list')
+    return response.data
+  },
+
+  async createTax(data: { name: string; rate: number }): Promise<any> {
+    const response = await apiClient.post('/products/taxes', data)
+    return response.data
   },
 }
 
+export default productService

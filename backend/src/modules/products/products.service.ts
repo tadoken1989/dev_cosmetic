@@ -3,16 +3,23 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common'
 import { ProductsRepository } from './products.repository'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { ProductFilterDto } from './dto/product-filter.dto'
 import { Product } from './entities/product.entity'
+import { InventoryService } from '../inventory/inventory.service'
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly productsRepository: ProductsRepository) {}
+  constructor(
+    private readonly productsRepository: ProductsRepository,
+    @Inject(forwardRef(() => InventoryService))
+    private readonly inventoryService: InventoryService,
+  ) {}
 
   async create(
     createProductDto: CreateProductDto,
@@ -49,15 +56,24 @@ export class ProductsService {
     
     // Xử lý images sau khi tạo product (nếu có)
     if (images && images.length > 0) {
-      // TODO: Implement image creation logic if needed
-      // For now, images will be handled separately via image upload endpoint
+      await this.productsRepository.createProductImages(product.id, images)
     }
     
     return this.productsRepository.findById(product.id)
   }
 
   async findAll(filters: ProductFilterDto) {
-    return this.productsRepository.findAll(filters)
+    const result = await this.productsRepository.findAll(filters)
+    
+    // Map imageUrl from first image for easier frontend access
+    if (result.data) {
+      result.data = result.data.map(product => ({
+        ...product,
+        imageUrl: product.images?.[0]?.url || null
+      }))
+    }
+    
+    return result
   }
 
   async findOne(id: number): Promise<Product> {
@@ -65,7 +81,12 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Không tìm thấy sản phẩm với ID ${id}`)
     }
-    return product
+    
+    // Map imageUrl from first image
+    return {
+      ...product,
+      imageUrl: product.images?.[0]?.url || null
+    } as any
   }
 
   async update(
@@ -107,13 +128,17 @@ export class ProductsService {
       updatedById: userId,
     }
 
-    // Xử lý images sau khi update product (nếu có)
-    if (images && images.length > 0) {
-      // TODO: Implement image update logic if needed
-      // For now, images will be handled separately via image upload endpoint
+    // Update product first
+    await this.productsRepository.update(id, productData)
+
+    // Xử lý images sau khi update product
+    // Nếu images là array (kể cả empty), update images
+    // Nếu images là undefined, giữ nguyên images hiện tại
+    if (images !== undefined) {
+      await this.productsRepository.updateProductImages(id, images)
     }
 
-    return this.productsRepository.update(id, productData)
+    return this.productsRepository.findById(id)
   }
 
   async remove(id: number): Promise<void> {
@@ -126,6 +151,90 @@ export class ProductsService {
       throw new BadRequestException('Query phải có ít nhất 2 ký tự')
     }
     return this.productsRepository.search(query)
+  }
+
+  async getProductTypes() {
+    return this.productsRepository.getProductTypes()
+  }
+
+  async getBrands() {
+    return this.productsRepository.getBrands()
+  }
+
+  async getTaxes() {
+    return this.productsRepository.getTaxes()
+  }
+
+  // ============================================
+  // PRODUCT TYPES CRUD
+  // ============================================
+
+  async createProductType(data: { name: string; code?: string; sortOrder?: number }) {
+    return this.productsRepository.createProductType(data)
+  }
+
+  async updateProductType(id: number, data: { name?: string; code?: string; sortOrder?: number }) {
+    const existing = await this.productsRepository.findProductTypeById(id)
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy loại sản phẩm')
+    }
+    return this.productsRepository.updateProductType(id, data)
+  }
+
+  async deleteProductType(id: number) {
+    const existing = await this.productsRepository.findProductTypeById(id)
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy loại sản phẩm')
+    }
+    return this.productsRepository.deleteProductType(id)
+  }
+
+  // ============================================
+  // BRANDS CRUD
+  // ============================================
+
+  async createBrand(data: { name: string; country?: string; description?: string }) {
+    return this.productsRepository.createBrand(data)
+  }
+
+  async updateBrand(id: number, data: { name?: string; country?: string; description?: string }) {
+    const existing = await this.productsRepository.findBrandById(id)
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy nhãn hiệu')
+    }
+    return this.productsRepository.updateBrand(id, data)
+  }
+
+  async deleteBrand(id: number) {
+    const existing = await this.productsRepository.findBrandById(id)
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy nhãn hiệu')
+    }
+    return this.productsRepository.deleteBrand(id)
+  }
+
+  // ============================================
+  // TAXES CRUD
+  // ============================================
+
+  async createTax(data: { name: string; code?: string; rate: number; description?: string }) {
+    return this.productsRepository.createTax(data)
+  }
+
+  async updateTax(id: number, data: { name?: string; code?: string; rate?: number; description?: string }) {
+    const existing = await this.productsRepository.findTaxById(id)
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy thuế')
+    }
+    return this.productsRepository.updateTax(id, data)
+  }
+
+  async deleteTax(id: number) {
+    const existing = await this.productsRepository.findTaxById(id)
+    if (!existing) {
+      throw new NotFoundException('Không tìm thấy thuế')
+    }
+    return this.productsRepository.deleteTax(id)
   }
 }
 
